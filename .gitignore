@@ -2,5 +2,5 @@
 __pycache__/
 *.pyc
 weather.db
+pytest_cache/
 .DS_Store
-.env
