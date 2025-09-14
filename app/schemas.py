@@ -1,39 +1,36 @@
 # app/schemas.py
+from pydantic import BaseModel
 from datetime import datetime
-from enum import Enum as PyEnum
-from typing import List
-from pydantic import BaseModel, ConfigDict, Field
+from typing import List, Optional, Dict, Union
 
 
-class MetricType(str, PyEnum):
-    TEMPERATURE = "temperature"
-    HUMIDITY = "humidity"
-    WIND_SPEED = "wind_speed"
-    PRESSURE = "pressure"  # optional, remove if not needed
+# -------------------------
+# Metric Schemas
+# -------------------------
 
-
-# Shared properties
 class MetricBase(BaseModel):
-    metric_type: MetricType
+    metric_type: str
     value: float
 
 
-# Schema for creating a new metric
 class MetricCreate(MetricBase):
     sensor_id: int
+    timestamp: Optional[datetime] = None
 
 
-# Schema for returning metric data
 class Metric(MetricBase):
     id: int
     sensor_id: int
     timestamp: datetime
 
-    # Pydantic v2: replaces orm_mode=True
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        from_attributes = True  # Pydantic v2 replacement for orm_mode
 
 
-# Sensor schemas
+# -------------------------
+# Sensor Schemas
+# -------------------------
+
 class SensorBase(BaseModel):
     name: str
 
@@ -44,7 +41,20 @@ class SensorCreate(SensorBase):
 
 class Sensor(SensorBase):
     id: int
-    metrics: List[Metric] = Field(default_factory=list)
+    metrics: List[Metric] = []
 
-    # Pydantic v2: replaces orm_mode=True
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        from_attributes = True
+
+
+# -------------------------
+# Metric Query Schemas
+# -------------------------
+
+class MetricQueryOut(BaseModel):
+    sensors: Union[List[int], str]
+    metrics: List[str]
+    stat: str
+    start: datetime
+    end: datetime
+    results: Dict[str, Dict[Union[int, str], Optional[float]]]

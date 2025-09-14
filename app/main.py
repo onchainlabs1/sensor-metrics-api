@@ -1,26 +1,35 @@
 # app/main.py
+"""Application entry point and FastAPI app factory."""
+
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import Base, engine
-
-# Routers (note: `api` is a top-level package, sibling of `app`)
 from api import sensors as sensors_router
 from api import metrics as metrics_router
 
 
 def create_app() -> FastAPI:
-    """
-    Application factory.
-    Creates FastAPI instance, mounts routers and middlewares.
-    """
+    """Create and configure the FastAPI application instance."""
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        # Development convenience: auto-create tables at startup.
+        # In production, replace with Alembic migrations.
+        Base.metadata.create_all(bind=engine)
+        yield
+        # Optional teardown logic can be added here if needed.
+
     app = FastAPI(
         title="Climate Stats API",
-        version="0.1.0",
-        description="Weather metrics ingestion and query service"
+        version="1.0.0",
+        docs_url="/docs",
+        redoc_url=None,
+        lifespan=lifespan,
     )
 
-    # Basic CORS for local development / tests
+    # CORS middleware: permissive for demo purposes; restrict in production.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -29,17 +38,18 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Create tables on startup (SQLite dev only; for production use migrations)
-    @app.on_event("startup")
-    def _create_tables() -> None:
-        Base.metadata.create_all(bind=engine)
+    # Root route - meta endpoint
+    @app.get("/", tags=["meta"])
+    def root() -> dict:
+        return {"message": "Climate Stats API"}
 
-    # Mount routers
+    # Healthcheck endpoint (used by tests and orchestration systems)
+    @app.get("/healthz", tags=["health"])
+    def healthz() -> dict:
+        return {"status": "ok"}
+
+    # Register routers (each API module exposes a `router` object)
     app.include_router(sensors_router.router)
     app.include_router(metrics_router.router)
-
-    @app.get("/healthz", tags=["health"])
-    def healthcheck():
-        return {"status": "ok"}
 
     return app
