@@ -1,7 +1,9 @@
 # app/schemas.py
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, ValidationError, ConfigDict
 from datetime import datetime
 from typing import List, Optional, Dict, Union
+
+from app.enums import MetricType
 
 
 # -------------------------
@@ -9,8 +11,33 @@ from typing import List, Optional, Dict, Union
 # -------------------------
 
 class MetricBase(BaseModel):
-    metric_type: str
+    metric_type: MetricType
     value: float
+
+    @field_validator('value')
+    @classmethod
+    def validate_value_range(cls, v: float, info) -> float:
+        """Validate metric values are within realistic ranges for their type."""
+        if 'metric_type' not in info.data:
+            return v
+        
+        metric_type = info.data['metric_type']
+        
+        # Define realistic ranges for each metric type
+        ranges = {
+            MetricType.TEMPERATURE: (-50.0, 60.0, "°C"),
+            MetricType.HUMIDITY: (0.0, 100.0, "%"),
+            MetricType.WIND_SPEED: (0.0, 200.0, "km/h")
+        }
+        
+        if metric_type in ranges:
+            min_val, max_val, unit = ranges[metric_type]
+            if not (min_val <= v <= max_val):
+                raise ValueError(
+                    f"{metric_type.value} must be between {min_val} and {max_val} {unit}, got {v}"
+                )
+        
+        return v
 
 
 class MetricCreate(MetricBase):
@@ -23,8 +50,7 @@ class Metric(MetricBase):
     sensor_id: int
     timestamp: datetime
 
-    class Config:
-        from_attributes = True  # Pydantic v2 replacement for orm_mode
+    model_config = ConfigDict(from_attributes=True)
 
 
 # -------------------------
@@ -43,8 +69,7 @@ class Sensor(SensorBase):
     id: int
     metrics: List[Metric] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # -------------------------

@@ -1,24 +1,35 @@
 # app/main.py
 """Application entry point and FastAPI app factory."""
 
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from loguru import logger
 
 from app.database import Base, engine
+from app.logging_config import setup_logging, RequestLoggingMiddleware
 from api import sensors as sensors_router
 from api import metrics as metrics_router
 
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application instance."""
+    
+    # Configure structured logging
+    log_level = os.getenv("LOG_LEVEL", "INFO")
+    setup_logging(log_level)
+    logger.info("Starting Climate Stats API", extra={"log_level": log_level})
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         # Development convenience: auto-create tables at startup.
         # In production, replace with Alembic migrations.
+        logger.info("Initializing database tables")
         Base.metadata.create_all(bind=engine)
+        logger.info("Application startup complete")
         yield
+        logger.info("Application shutdown")
         # Optional teardown logic can be added here if needed.
 
     app = FastAPI(
@@ -29,6 +40,9 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    # Add request logging middleware
+    app.add_middleware(RequestLoggingMiddleware)
+    
     # CORS middleware: permissive for demo purposes; restrict in production.
     app.add_middleware(
         CORSMiddleware,

@@ -14,10 +14,12 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     func,
+    Enum as SQLEnum,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+from app.enums import MetricType
 
 
 class Sensor(Base):
@@ -48,8 +50,11 @@ class Metric(Base):
         index=True,
         nullable=False,
     )
-    # Stored as string for portability; schema enforces allowed values.
-    metric_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    # Enum type ensures data integrity at database level
+    metric_type: Mapped[MetricType] = mapped_column(
+        SQLEnum(MetricType, native_enum=False), 
+        nullable=False
+    )
     value: Mapped[float] = mapped_column(Float, nullable=False)
 
     timestamp: Mapped[datetime] = mapped_column(
