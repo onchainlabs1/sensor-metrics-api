@@ -65,7 +65,7 @@ curl -X POST "https://sensor-metrics-api.onrender.com/metrics/" \
 
 ### Query Aggregated Data
 ```bash
-# Get average temperature for sensor 1
+# Get average temperature for sensor 1 (last 24 hours by default)
 curl "https://sensor-metrics-api.onrender.com/metrics/query?stat=avg&sensors=1&metrics=temperature"
 
 # Get min humidity across all sensors in date range
