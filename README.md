@@ -1,14 +1,16 @@
 # Climate Stats API
 
-A FastAPI service for ingesting sensor metrics (temperature, humidity, wind speed) and querying aggregated statistics across time windows and sensor groups.
+A FastAPI service for sensor data collection and analysis. Receives metrics like temperature, humidity, and wind speed from sensors, then provides aggregated statistics.
 
-## Features
+**Live Demo:** https://sensor-metrics-api.onrender.com/docs
 
-- **Metric Ingestion**: REST endpoints for sensor data collection
-- **Aggregated Queries**: Average, min, max, sum statistics with flexible filtering
-- **Time-based Filtering**: Query metrics within configurable date ranges
-- **Multi-sensor Support**: Aggregate data across single or multiple sensors
-- **Production Ready**: Environment-based configuration, health checks, CORS support
+## What it does
+
+- Collect sensor data via REST API
+- Store metrics with timestamps
+- Query aggregated statistics (avg, min, max, sum)
+- Filter by sensor, metric type, and date ranges
+- Validate realistic value ranges for each metric type
 
 ## Quick Start
 
@@ -31,44 +33,46 @@ pip install -r requirements.txt
 uvicorn app.main:create_app --factory --reload --host 0.0.0.0 --port 8000
 ```
 
-API documentation available at: http://localhost:8000/docs
+**Local:** http://localhost:8000/docs  
+**Live Demo:** https://sensor-metrics-api.onrender.com/docs
 
 ## Usage Examples
 
 ### Create Sensors
 ```bash
-curl -X POST "http://localhost:8000/sensors/" \
+# Create sensors
+curl -X POST "https://sensor-metrics-api.onrender.com/sensors/" \
   -H "Content-Type: application/json" \
   -d '{"name": "outdoor-sensor-01"}'
 
-curl -X POST "http://localhost:8000/sensors/" \
+curl -X POST "https://sensor-metrics-api.onrender.com/sensors/" \
   -H "Content-Type: application/json" \
   -d '{"name": "indoor-sensor-02"}'
 ```
 
 ### Ingest Metrics
 ```bash
-# Temperature reading
-curl -X POST "http://localhost:8000/metrics/" \
+# Add temperature reading
+curl -X POST "https://sensor-metrics-api.onrender.com/metrics/" \
   -H "Content-Type: application/json" \
   -d '{"sensor_id": 1, "metric_type": "temperature", "value": 23.5}'
 
-# Humidity reading with custom timestamp
-curl -X POST "http://localhost:8000/metrics/" \
+# Add humidity reading
+curl -X POST "https://sensor-metrics-api.onrender.com/metrics/" \
   -H "Content-Type: application/json" \
-  -d '{"sensor_id": 1, "metric_type": "humidity", "value": 65.0, "timestamp": "2024-01-15T10:30:00Z"}'
+  -d '{"sensor_id": 1, "metric_type": "humidity", "value": 65.0}'
 ```
 
 ### Query Aggregated Data
 ```bash
-# Average temperature for sensor 1
-curl "http://localhost:8000/metrics/query?stat=avg&sensors=1&metrics=temperature"
+# Get average temperature for sensor 1
+curl "https://sensor-metrics-api.onrender.com/metrics/query?stat=avg&sensors=1&metrics=temperature"
 
-# Min/max humidity across all sensors in date range
-curl "http://localhost:8000/metrics/query?stat=min&metrics=humidity&start=2024-01-01T00:00:00Z&end=2024-01-31T23:59:59Z"
+# Get min humidity across all sensors in date range
+curl "https://sensor-metrics-api.onrender.com/metrics/query?stat=min&metrics=humidity&start=2024-01-01T00:00:00Z&end=2024-01-31T23:59:59Z"
 
 # Multiple sensors and metrics
-curl "http://localhost:8000/metrics/query?stat=avg&sensors=1,2&metrics=temperature&metrics=humidity"
+curl "https://sensor-metrics-api.onrender.com/metrics/query?stat=avg&sensors=1,2&metrics=temperature&metrics=humidity"
 ```
 
 ## Testing
@@ -100,62 +104,37 @@ pytest tests/test_api.py -v
 └── requirements.txt      # Python dependencies
 ```
 
-## Configuration
+## Database
 
-Environment variables:
-- `DATABASE_URL`: Database connection string (default: `sqlite:///./weather.db`)
+Uses SQLite by default (perfect for development and small deployments). For production, set:
 
-### PostgreSQL Example
 ```bash
-export DATABASE_URL="postgresql+psycopg2://user:pass@localhost:5432/climate_db"
+DATABASE_URL="postgresql://user:pass@host:5432/dbname"
 ```
 
-## Production Considerations
+## Deployment
 
-### Database Migrations
+**Live on Render:** https://sensor-metrics-api.onrender.com
+
+For your own deployment:
+
 ```bash
-# Initialize Alembic
-pip install alembic
-alembic init migrations
+# Using Docker
+docker build -t climate-api .
+docker run -p 8000:8000 climate-api
 
-# Generate migration
-alembic revision --autogenerate -m "Initial schema"
-
-# Apply migrations
-alembic upgrade head
-```
-
-### Recommended Enhancements
-- **Structured Logging**: Implement JSON logging with correlation IDs
-- **Monitoring**: Add Prometheus metrics and health check endpoints
-- **Input Validation**: Enforce metric type enums and value ranges
-- **Rate Limiting**: Implement request throttling for ingestion endpoints
-- **Authentication**: Add API key or JWT-based authentication
-- **Data Retention**: Implement automated cleanup for old metrics
-- **Caching**: Redis for frequently accessed aggregations
-
-### Docker Deployment
-```dockerfile
-FROM python:3.11-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-COPY . .
-CMD ["uvicorn", "app.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
+# Or deploy to Render/Heroku/Railway
+# Just connect your GitHub repo and it works
 ```
 
 ## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/` | API metadata |
+| `GET` | `/` | API info |
 | `GET` | `/healthz` | Health check |
 | `POST` | `/sensors/` | Create sensor |
-| `GET` | `/sensors/` | List all sensors |
-| `GET` | `/sensors/{id}` | Get sensor by ID |
-| `POST` | `/metrics/` | Ingest metric data |
-| `GET` | `/metrics/query` | Query aggregated statistics |
-
-## License
-
-MIT License
+| `GET` | `/sensors/` | List sensors |
+| `GET` | `/sensors/{id}` | Get sensor |
+| `POST` | `/metrics/` | Add metric |
+| `GET` | `/metrics/query` | Query statistics |
