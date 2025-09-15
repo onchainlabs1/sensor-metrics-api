@@ -2,7 +2,7 @@
 import time
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
-from typing import Optional, List, Union
+from typing import Optional, List
 from datetime import datetime
 from loguru import logger
 from app.models import Metric
@@ -12,7 +12,7 @@ def aggregate_metrics(
     db: Session,
     stat: str,
     sensors: Optional[List[int]],
-    metrics: Optional[List[Union[str, MetricType]]],
+    metrics: Optional[List[MetricType]],
     start: Optional[datetime],
     end: Optional[datetime],
 ):
