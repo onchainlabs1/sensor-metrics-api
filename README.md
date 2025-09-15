@@ -11,7 +11,24 @@ A FastAPI service for sensor data collection and analysis. Receives metrics like
 - Query aggregated statistics (avg, min, max, sum)
 - Filter by sensor, metric type, and date ranges
 - Validate realistic value ranges for each metric type
+- Timezone-aware timestamps for global deployment
+- Structured JSON logging for production observability
 
+
+## Architecture Overview
+
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Client    │    │  FastAPI    │    │  Database   │
+│             │    │             │    │             │
+│   Requests  ├───→│ Validation  ├───→│  SQLite     │
+│   /metrics  │    │ Business    │    │ Aggregation │
+│   /sensors  │    │ Logging     │    │ Persistence │
+└─────────────┘    └─────────────┘    └─────────────┘
+```
+
+**Request Flow:** Client → API Router → Validation → Business Logic → Database  
+**Observability:** Structured logging tracks all operations with timing and context
 ## Quick Start
 
 ### Prerequisites
@@ -99,6 +116,8 @@ pytest tests/test_api.py -v
 │   ├── database.py       # SQLAlchemy configuration
 │   ├── main.py           # FastAPI app factory
 │   ├── models.py         # SQLAlchemy ORM models
+│   ├── enums.py          # Type-safe metric definitions
+│   ├── logging_config.py # Structured logging setup
 │   └── schemas.py        # Pydantic request/response models
 ├── tests/                # Test suite
 └── requirements.txt      # Python dependencies
