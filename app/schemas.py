@@ -1,5 +1,5 @@
 # app/schemas.py
-from pydantic import BaseModel, field_validator, ValidationError, ConfigDict
+from pydantic import BaseModel, field_validator, ValidationError, ConfigDict, Field
 from datetime import datetime
 from typing import List, Optional, Dict, Union
 
@@ -67,7 +67,7 @@ class SensorCreate(SensorBase):
 
 class Sensor(SensorBase):
     id: int
-    metrics: List[Metric] = []
+    metrics: List[Metric] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
 

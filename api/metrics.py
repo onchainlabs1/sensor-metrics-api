@@ -1,7 +1,7 @@
 # api/metrics.py
 """API routes for metrics ingestion and querying."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -11,6 +11,7 @@ from loguru import logger
 from app.database import get_db
 from app import models, schemas
 from app.crud import aggregate_metrics
+from app.enums import MetricType
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
 
@@ -31,7 +32,7 @@ def create_metric(payload: schemas.MetricCreate, db: Session = Depends(get_db)):
             sensor_id=payload.sensor_id,
             metric_type=payload.metric_type,
             value=payload.value,
-            timestamp=payload.timestamp or datetime.utcnow(),
+            timestamp=payload.timestamp or datetime.now(timezone.utc),
         )
         db.add(metric)
         db.commit()
@@ -88,7 +89,7 @@ def query_metrics(
     sensors: Optional[str] = Query(
         None, description="Comma-separated sensor IDs, e.g. '1,2'"
     ),
-    metrics: Optional[List[str]] = Query(
+    metrics: Optional[List[MetricType]] = Query(
         None, description="List of metric types (temperature, humidity, wind_speed)"
     ),
     start: Optional[datetime] = Query(None, description="Start datetime (ISO format)"),
@@ -139,7 +140,7 @@ def query_metrics(
         "sensors": sensor_ids if sensor_ids is not None else "all",
         "metrics": metrics if metrics is not None else list(found_metrics),
         "stat": stat,
-        "start": start or datetime.utcnow(),
-        "end": end or datetime.utcnow(),
+        "start": start or (datetime.now(timezone.utc) - timedelta(days=1)),
+        "end": end or datetime.now(timezone.utc),
         "results": results,
     }
