@@ -87,6 +87,11 @@ def _validate_date_range(start: Optional[datetime], end: Optional[datetime]) -> 
         # If only start is provided, ensure it's not too far in the past
         # Allow up to 31 days in the past for reasonable historical queries
         min_start = datetime.now(timezone.utc) - timedelta(days=31)
+        
+        # Handle naive datetime by assuming UTC
+        if start.tzinfo is None:
+            start = start.replace(tzinfo=timezone.utc)
+        
         if start < min_start:
             raise HTTPException(
                 status_code=400,
@@ -97,6 +102,11 @@ def _validate_date_range(start: Optional[datetime], end: Optional[datetime]) -> 
         # If only end is provided, ensure it's not too far in the future
         # Allow up to 31 days in the future for reasonable forward queries
         max_end = datetime.now(timezone.utc) + timedelta(days=31)
+        
+        # Handle naive datetime by assuming UTC
+        if end.tzinfo is None:
+            end = end.replace(tzinfo=timezone.utc)
+        
         if end > max_end:
             raise HTTPException(
                 status_code=400,
