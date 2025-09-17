@@ -50,6 +50,8 @@ pip install -r requirements.txt
 
 # Start development server
 uvicorn app.main:create_app --factory --reload --host 0.0.0.0 --port 8000
+# Alternative (without factory):
+# uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
 **Local:** http://localhost:8000/docs  
@@ -107,6 +109,11 @@ pytest --cov=app --cov=api
 pytest tests/test_api.py -v
 ```
 
+### Troubleshooting
+
+- Tests fail with `httpx` missing: `pip install httpx`
+- Database connection errors: verify `DATABASE_URL` driver (e.g., `sqlite`, `postgresql+psycopg2`).
+
 ## Project Structure
 
 ```
@@ -138,6 +145,16 @@ DATABASE_URL="postgresql://user:pass@host:5432/dbname"
 **Live on Render:** https://sensor-metrics-api.onrender.com
 
 CI runs on GitHub Actions using the workflow in `.github/workflows/ci.yml` and executes the pytest suite on every push/PR.
+
+### Configuration
+
+Environment variables:
+
+- `DATABASE_URL` (optional): defaults to `sqlite:///./weather.db`. Example Postgres: `postgresql+psycopg2://user:pass@host:5432/dbname`
+- `LOG_LEVEL` (optional): default `INFO`. Options: `DEBUG|INFO|WARNING|ERROR`.
+- On Render, `PYTHON_VERSION` is pinned in `render.yaml`.
+
+Database schema is auto-created on startup for convenience. For production, consider Alembic migrations.
 
 For your own deployment:
 
