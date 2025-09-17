@@ -424,14 +424,31 @@ def test_query_valid_date_ranges_succeed(test_client):
 
 
 def test_query_single_date_parameters_work(test_client):
-    """Providing only start OR end date should work (no range validation)."""
-    # Only start date
-    response = test_client.get("/metrics/query?stat=avg&start=2024-01-01T00:00:00Z")
+    """Providing only start OR end date should work within 31-day window."""
+    from datetime import datetime, timezone, timedelta
+    
+    # Only start date - use recent date within 31 days (format: YYYY-MM-DDTHH:MM:SSZ)
+    recent_start = (datetime.now(timezone.utc) - timedelta(days=15)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    response = test_client.get(f"/metrics/query?stat=avg&start={recent_start}")
     assert response.status_code == 200
     
-    # Only end date
-    response = test_client.get("/metrics/query?stat=avg&end=2024-01-08T00:00:00Z")
+    # Only end date - use recent date within 31 days
+    recent_end = (datetime.now(timezone.utc) + timedelta(days=15)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    response = test_client.get(f"/metrics/query?stat=avg&end={recent_end}")
     assert response.status_code == 200
+
+
+def test_query_single_date_outside_window_fails(test_client):
+    """Single date parameters outside 31-day window should fail."""
+    # Start date too far in the past
+    response = test_client.get("/metrics/query?stat=avg&start=2020-01-01T00:00:00Z")
+    assert response.status_code == 400
+    assert "more than 31 days in the past" in response.json()["detail"]
+    
+    # End date too far in the future
+    response = test_client.get("/metrics/query?stat=avg&end=2030-01-01T00:00:00Z")
+    assert response.status_code == 400
+    assert "more than 31 days in the future" in response.json()["detail"]
 
 
 def test_query_malformed_datetime_fails(test_client):

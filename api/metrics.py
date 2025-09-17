@@ -81,6 +81,27 @@ def _validate_date_range(start: Optional[datetime], end: Optional[datetime]) -> 
                 status_code=400,
                 detail="Date range cannot exceed 31 days"
             )
+    
+    # Validate partial date filters to prevent unbounded queries
+    elif start and not end:
+        # If only start is provided, ensure it's not too far in the past
+        # Allow up to 31 days in the past for reasonable historical queries
+        min_start = datetime.now(timezone.utc) - timedelta(days=31)
+        if start < min_start:
+            raise HTTPException(
+                status_code=400,
+                detail="Start date cannot be more than 31 days in the past when no end date is provided"
+            )
+    
+    elif end and not start:
+        # If only end is provided, ensure it's not too far in the future
+        # Allow up to 31 days in the future for reasonable forward queries
+        max_end = datetime.now(timezone.utc) + timedelta(days=31)
+        if end > max_end:
+            raise HTTPException(
+                status_code=400,
+                detail="End date cannot be more than 31 days in the future when no start date is provided"
+            )
 
 
 @router.get("/query", response_model=schemas.MetricQueryOut)
