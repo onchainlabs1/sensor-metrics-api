@@ -148,6 +148,15 @@ def query_metrics(
     if not start and not end:
         end = datetime.now(timezone.utc)
         start = end - timedelta(days=1)
+    
+    # Apply bounded windows for partial date filters to enforce 1-31 day requirement
+    elif start and not end:
+        # If only start is provided, limit to max 31 days from start
+        end = start + timedelta(days=31)
+    
+    elif end and not start:
+        # If only end is provided, limit to max 31 days before end
+        start = end - timedelta(days=31)
 
     # Execute aggregation query via CRUD
     rows = aggregate_metrics(
