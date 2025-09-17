@@ -123,6 +123,11 @@ def query_metrics(
                 detail="Invalid sensor list format. Use comma-separated integers like '1,2,3'"
             )
 
+    # Apply default date range if not provided (last 24 hours)
+    if not start and not end:
+        end = datetime.now(timezone.utc)
+        start = end - timedelta(days=1)
+
     # Execute aggregation query via CRUD
     rows = aggregate_metrics(
         db, stat=stat, sensors=sensor_ids, metrics=metrics, start=start, end=end
