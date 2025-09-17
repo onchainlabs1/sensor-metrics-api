@@ -28,11 +28,16 @@ def create_metric(payload: schemas.MetricCreate, db: Session = Depends(get_db)):
             logger.warning(f"Metric creation failed: sensor {payload.sensor_id} not found")
             raise HTTPException(status_code=404, detail="Sensor not found")
 
+        # Normalize timestamp to UTC if provided (handle naive datetimes)
+        timestamp = payload.timestamp or datetime.now(timezone.utc)
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
+        
         metric = models.Metric(
             sensor_id=payload.sensor_id,
             metric_type=payload.metric_type,
             value=payload.value,
-            timestamp=payload.timestamp or datetime.now(timezone.utc),
+            timestamp=timestamp,
         )
         db.add(metric)
         db.commit()
