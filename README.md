@@ -1,6 +1,6 @@
 # Climate Stats API
 
-[![CI](https://github.com/onchainlabs1/sensor-metrics-api/actions/workflows/ci.yml/badge.svg)](https://github.com/onchainlabs1/sensor-metrics-api/actions/workflows/ci.yml)
+[![CI](https://github.com/onchainlabs1/sensor-metrics-api/actions/workflows/ci.yml/badge.svg)](https://github.com/onchainlabs1/sensor-metrics-api/actions/workflows/ci.yml) ![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg) [![Deploy: Render](https://img.shields.io/badge/deploy-render-46E3B7?logo=render&logoColor=white)](https://sensor-metrics-api.onrender.com/docs)
 
 A FastAPI service for sensor data collection and analysis. Receives metrics like temperature, humidity, and wind speed from sensors, then provides aggregated statistics.
 
