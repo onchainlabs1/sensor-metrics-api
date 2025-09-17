@@ -43,14 +43,7 @@ jobs:
 
     - name: Sanity import check
       run: |
-        python - <<'PY'
-import importlib
-print('Importing app...')
-importlib.import_module('app')
-print('Importing api...')
-importlib.import_module('api')
-print('Imports OK')
-PY
+        python -c "import importlib; print('Importing app...'); importlib.import_module('app'); print('Importing api...'); importlib.import_module('api'); print('Imports OK')"
     
     - name: Run tests
       run: |
