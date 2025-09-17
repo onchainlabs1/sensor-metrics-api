@@ -60,8 +60,14 @@ def create_metric(payload: schemas.MetricCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-def _validate_date_range(start: Optional[datetime], end: Optional[datetime]) -> None:
-    """Validate that date range is between 1 day and 31 days."""
+def _validate_date_range(start: Optional[datetime], end: Optional[datetime]) -> tuple[Optional[datetime], Optional[datetime]]:
+    """Validate that date range is between 1 day and 31 days. Returns normalized datetimes."""
+    # Normalize naive datetimes to UTC
+    if start and start.tzinfo is None:
+        start = start.replace(tzinfo=timezone.utc)
+    if end and end.tzinfo is None:
+        end = end.replace(tzinfo=timezone.utc)
+    
     if start and end:
         if end <= start:
             raise HTTPException(
@@ -88,10 +94,6 @@ def _validate_date_range(start: Optional[datetime], end: Optional[datetime]) -> 
         # Allow up to 31 days in the past for reasonable historical queries
         min_start = datetime.now(timezone.utc) - timedelta(days=31)
         
-        # Handle naive datetime by assuming UTC
-        if start.tzinfo is None:
-            start = start.replace(tzinfo=timezone.utc)
-        
         if start < min_start:
             raise HTTPException(
                 status_code=400,
@@ -103,15 +105,13 @@ def _validate_date_range(start: Optional[datetime], end: Optional[datetime]) -> 
         # Allow up to 31 days in the future for reasonable forward queries
         max_end = datetime.now(timezone.utc) + timedelta(days=31)
         
-        # Handle naive datetime by assuming UTC
-        if end.tzinfo is None:
-            end = end.replace(tzinfo=timezone.utc)
-        
         if end > max_end:
             raise HTTPException(
                 status_code=400,
                 detail="End date cannot be more than 31 days in the future when no start date is provided"
             )
+    
+    return start, end
 
 
 @router.get("/query", response_model=schemas.MetricQueryOut)
@@ -140,8 +140,8 @@ def query_metrics(
     - End date must be after start date
     - Malformed datetime inputs return 422 validation errors
     """
-    # Validate date range constraints
-    _validate_date_range(start, end)
+    # Validate date range constraints and get normalized datetimes
+    start, end = _validate_date_range(start, end)
     
     # Parse sensors string "1,2" -> [1,2]
     sensor_ids = None
