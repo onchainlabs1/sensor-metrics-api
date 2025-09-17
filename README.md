@@ -1,5 +1,7 @@
 # Climate Stats API
 
+[![CI](https://github.com/onchainlabs1/sensor-metrics-api/actions/workflows/ci.yml/badge.svg)](https://github.com/onchainlabs1/sensor-metrics-api/actions/workflows/ci.yml)
+
 A FastAPI service for sensor data collection and analysis. Receives metrics like temperature, humidity, and wind speed from sensors, then provides aggregated statistics.
 
 **Live Demo:** https://sensor-metrics-api.onrender.com/docs
@@ -134,6 +136,8 @@ DATABASE_URL="postgresql://user:pass@host:5432/dbname"
 ## Deployment
 
 **Live on Render:** https://sensor-metrics-api.onrender.com
+
+CI runs on GitHub Actions using the workflow in `.github/workflows/ci.yml` and executes the pytest suite on every push/PR.
 
 For your own deployment:
 
