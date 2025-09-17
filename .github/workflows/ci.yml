@@ -9,6 +9,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}
     
     strategy:
       matrix:
@@ -21,6 +23,11 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+    
+    - name: Show Python and pip versions
+      run: |
+        python --version
+        pip --version
     
     - name: Install dependencies
       run: |
